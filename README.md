@@ -1,5 +1,8 @@
 ﻿# ProfNITT — Nifty Portfolio Optimizer
 
+PUBLISHED WEBSITE LINK - https://portfoliooptimizationaquafinalgit-ftmpfjkvnjsjhujssf3kdv.streamlit.app/#nifty-portfolio-optimizer
+
+
 ##  Key Features
 
 - **Live Market Data**: Scrapes real-time constituents and sector classifications directly from the National Stock Exchange (NSE) and pulls 10 years of split/dividend-adjusted price history via Yahoo Finance.
