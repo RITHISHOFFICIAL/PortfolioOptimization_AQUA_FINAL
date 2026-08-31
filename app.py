@@ -12,7 +12,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from pypfopt import EfficientFrontier, HRPOpt, expected_returns, risk_models, DiscreteAllocation
 
-# Page Configuration
+
 st.set_page_config(
     page_title="Nifty Quant Portfolio Optimizer",
     page_icon="chart_with_upwards_trend",
@@ -20,7 +20,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Light Blue / Highlight Modern Styling
+
 st.markdown("""
 <style>
     /* Main Background & Fonts */
@@ -147,9 +147,10 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# -------------------------------------------------------------
-# CACHED DATA FETCHING
-# -------------------------------------------------------------
+
+
+
+
 @st.cache_data(ttl=3600*12)
 def get_nifty_constituents(universe="Nifty 50"):
     url_50 = "https://niftyindices.com/IndexConstituent/ind_nifty50list.csv"
@@ -194,15 +195,16 @@ def load_price_data(tickers, start_date="2016-01-01"):
     bmark_px = close_df["^NSEI"].squeeze().ffill()
     stock_px = close_df.drop(columns=["^NSEI"], errors="ignore").ffill()
     
-    # Drop stocks with more than 20% missing values
+    
     valid_cols = stock_px.isnull().mean()[lambda x: x < 0.20].index.tolist()
     stock_px = stock_px[valid_cols].dropna(how="all")
     
     return stock_px, bmark_px
 
-# -------------------------------------------------------------
-# SIDEBAR CONTROLS
-# -------------------------------------------------------------
+
+
+
+
 import os
 if os.path.exists("logo.png"):
     st.sidebar.image("logo.png", use_container_width=True)
@@ -235,9 +237,8 @@ sector_cap = st.sidebar.slider("Max Sector Cap (%)", min_value=15, max_value=60,
 stock_cap = st.sidebar.slider("Max Single Stock Cap (%)", min_value=5, max_value=30, value=12, step=1) / 100.0
 
 
-# -------------------------------------------------------------
-# MAIN APP PROCESSING
-# -------------------------------------------------------------
+
+
 
 st.title("Nifty Portfolio Optimizer")
 
@@ -247,7 +248,7 @@ tickers_all, name_map, sector_map = get_nifty_constituents(universe)
 with st.spinner("Fetching market quotes and computing optimal risk weights..."):
     stock_px, bmark_px = load_price_data(tickers_all, start_date="2016-01-01")
     
-    # Train / Test split (6-year train, 4-year test)
+   
     split_date = "2021-12-31"
     train_px = stock_px.loc[:split_date]
     test_px  = stock_px.loc["2022-01-01":]
@@ -258,14 +259,18 @@ with st.spinner("Fetching market quotes and computing optimal risk weights..."):
     bmark_ret = bmark_px.pct_change().dropna()
     bmark_ret_test = bmark_ret.loc[test_ret.index[0]:]
     
-    RF = 0.065 # India 91-day T-Bill rate (6.5%)
+    RF = 0.065
     TRADING_DAYS = 252
     
-    # Expected returns (CAPM) and Covariance (Ledoit-Wolf)
+
+
+    
     mu_capm = expected_returns.capm_return(train_px, market_prices=bmark_px.loc[:split_date], risk_free_rate=RF, frequency=TRADING_DAYS)
     S = risk_models.CovarianceShrinkage(train_px, frequency=TRADING_DAYS).ledoit_wolf()
     
-    # ------------------ STRATEGY SOLVERS ------------------
+
+
+    
     if "Momentum" in strategy:
         mom_12m = (train_px.iloc[-1] / train_px.iloc[-252] - 1.0).sort_values(ascending=False)
         selected_tickers = mom_12m.head(top_n).index.tolist()
@@ -301,24 +306,29 @@ with st.spinner("Fetching market quotes and computing optimal risk weights..."):
     
     weights = {k: v for k, v in raw_weights.items() if v > 0.0005}
 
-# ------------------ METRICS COMPUTATION ------------------
+
+
 active_tickers = list(weights.keys())
 w_arr = np.array([weights[t] for t in active_tickers])
 w_arr = w_arr / w_arr.sum()
 
-# Out-of-sample performance
+
+
 port_daily_test = test_ret[active_tickers].values @ w_arr
 ann_ret_oos = float(np.squeeze(port_daily_test.mean())) * TRADING_DAYS
 ann_vol_oos = float(np.squeeze(port_daily_test.std())) * np.sqrt(TRADING_DAYS)
 sharpe_oos  = (ann_ret_oos - RF) / ann_vol_oos
 
-# Cumulative return & Max Drawdown
+
+
+
 port_cum_oos = (1 + pd.Series(port_daily_test, index=test_ret.index)).cumprod()
 bmark_cum_oos = (1 + bmark_ret_test).cumprod()
 drawdown = (port_cum_oos / port_cum_oos.cummax() - 1)
 max_dd = float(np.squeeze(drawdown.min()))
 
-# ------------------ METRICS DISPLAY ------------------
+
+
 c1, c2, c3, c4 = st.columns(4)
 with c1:
     st.markdown(f'<div class="metric-card"><div class="metric-lbl">Expected Annual Return</div><div class="metric-val">{ann_ret_oos*100:.1f}%</div></div>', unsafe_allow_html=True)
@@ -331,9 +341,9 @@ with c4:
 
 st.markdown("###")
 
-# -------------------------------------------------------------
-# DISCRETE SHARE ALLOCATION & ORDER SHEET
-# -------------------------------------------------------------
+
+
+
 latest_prices = stock_px[active_tickers].iloc[-1]
 da = DiscreteAllocation(weights, latest_prices, total_portfolio_value=capital)
 allocation, leftover = da.greedy_portfolio()
@@ -372,9 +382,9 @@ with col_summary_2:
         mime="text/csv"
     )
 
-# -------------------------------------------------------------
-# INTERACTIVE CHARTS
-# -------------------------------------------------------------
+
+
+
 st.markdown("---")
 tab1, tab2, tab3 = st.tabs([" Backtest & Drawdown", " Asset & Sector Allocation", "Correlation Heatmap"])
 
