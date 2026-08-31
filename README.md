@@ -28,7 +28,6 @@
 ```
 ├── app.py               # Streamlit web application dashboard
 ├── main.py              # Standalone CLI / Python script for terminal execution
-├── logo.png             # ProfNITT transparent logo with glow
 ├── requirements.txt     # Python package dependencies
 ├── .gitignore           # Git ignore rules for clean repository
 └── README.md            # Project documentation & deployment guide
