@@ -34,39 +34,6 @@
 └── README.md            # Project documentation & deployment guide
 ```
 
----
-
-##  Quickstart (Run Locally)
-
-### 1. Clone the repository
-```bash
-git clone https://github.com/<YOUR_USERNAME>/nifty-portfolio-optimizer.git
-cd nifty-portfolio-optimizer
-```
-
-### 2. Install dependencies
-```bash
-python -m pip install -r requirements.txt
-```
-
-### 3. Launch the web application
-```bash
-python -m streamlit run app.py
-```
-*Your browser will automatically open at `http://localhost:8501`.*
-
----
-
-## How to Deploy Online for FREE (2 Steps)
-
-### Streamlit Community Cloud (Recommended)
-1. Push this repository to **GitHub**.
-2. Visit **[share.streamlit.io](https://share.streamlit.io)** and log in with GitHub.
-3. Click **"New app"**, select your repository, set branch to `main`, and main file to `app.py`.
-4. Click **"Deploy"**! You will get a live public URL (e.g. `https://profnitt-portfolio.streamlit.app`).
-
----
-
 ##  Mathematical Foundations
 
 - **CAPM Expected Returns**:
