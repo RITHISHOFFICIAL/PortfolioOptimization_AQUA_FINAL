@@ -1,6 +1,4 @@
 ﻿# ProfNITT — Nifty Portfolio Optimizer
-An institutional-grade portfolio optimization and discrete share allocation web application for the Indian equity market (**Nifty 50** & **Nifty 100**), built with Python, PyPortfolioOpt, Plotly, and Streamlit.
----
 
 ##  Key Features
 
