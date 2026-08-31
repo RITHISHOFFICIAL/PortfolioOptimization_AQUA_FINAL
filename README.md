@@ -1,22 +1,16 @@
-﻿# 📈 ProfNITT — Nifty Quant Portfolio Optimizer
-
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
+﻿# ProfNITT — Nifty Portfolio Optimizer
 An institutional-grade portfolio optimization and discrete share allocation web application for the Indian equity market (**Nifty 50** & **Nifty 100**), built with Python, PyPortfolioOpt, Plotly, and Streamlit.
-
 ---
 
-## 🌟 Key Features
+##  Key Features
 
 - **Live Market Data**: Scrapes real-time constituents and sector classifications directly from the National Stock Exchange (NSE) and pulls 10 years of split/dividend-adjusted price history via Yahoo Finance.
 - **5 Quantitative Strategies**:
-  - 🌟 **Hierarchical Risk Parity (HRP)** — Graph-theoretic machine learning clustering for robust out-of-sample risk distribution.
-  - ⚡ **12M Momentum + Risk Parity** — Filters the top momentum compounders in Nifty and sizes positions using risk parity.
-  - 🎯 **Max-Sharpe MVO (Mean-Variance)** — Quadratic optimization with CAPM beta anchoring and strict sector caps (e.g. max 30%).
-  - 🛡️ **Minimum Volatility** — Minimizes portfolio variance for defensive asset protection.
-  - ⚖️ **Equal-Weight Benchmark** — Naive $1/N$ baseline for realistic comparison.
+  -  **Hierarchical Risk Parity (HRP)** — Graph-theoretic machine learning clustering for robust out-of-sample risk distribution.
+  -  **12M Momentum + Risk Parity** — Filters the top momentum compounders in Nifty and sizes positions using risk parity.
+  -  **Max-Sharpe MVO (Mean-Variance)** — Quadratic optimization with CAPM beta anchoring and strict sector caps (e.g. max 30%).
+  -  **Minimum Volatility** — Minimizes portfolio variance for defensive asset protection.
+  -  **Equal-Weight Benchmark** — Naive $1/N$ baseline for realistic comparison.
 - **Realistic Assumptions**:
   - **No In-Sample Overfitting**: 6-year training window (2016–2021) evaluated on an unseen 4-year out-of-sample test window (2022–today).
   - **India Risk-Free Rate**: Anchored to **6.5% p.a.** (India 91-day T-bill yield).
@@ -24,15 +18,15 @@ An institutional-grade portfolio optimization and discrete share allocation web 
 - **Discrete Share Order Sheet**: Automatically converts fractional weights into **exact integer shares to buy** based on your total capital (₹) and live stock quotes, reporting leftover cash reserves.
 - **One-Click Broker Export**: Download ready-to-execute CSV baskets for **Zerodha**, **Groww**, and **Dhan**.
 - **Interactive Visualizations (Plotly)**:
-  - 📈 Out-of-sample cumulative growth of ₹1 vs Nifty 50 index
-  - 📉 Underwater peak-to-trough drawdown curves
-  - 🍩 Interactive stock allocation donut chart
-  - 📊 Sector concentration bar chart with constraint limits
-  - 🔥 Asset correlation heatmap
+  - Out-of-sample cumulative growth of ₹1 vs Nifty 50 index
+  -  Underwater peak-to-trough drawdown curves
+  -  Interactive stock allocation donut chart
+  -  Sector concentration bar chart with constraint limits
+  -  Asset correlation heatmap
 
 ---
 
-## 📁 Repository Structure
+##  Repository Structure
 
 ```
 ├── app.py               # Streamlit web application dashboard
@@ -45,7 +39,7 @@ An institutional-grade portfolio optimization and discrete share allocation web 
 
 ---
 
-## 🚀 Quickstart (Run Locally)
+##  Quickstart (Run Locally)
 
 ### 1. Clone the repository
 ```bash
@@ -66,7 +60,7 @@ python -m streamlit run app.py
 
 ---
 
-## ☁️ How to Deploy Online for FREE (2 Steps)
+## How to Deploy Online for FREE (2 Steps)
 
 ### Streamlit Community Cloud (Recommended)
 1. Push this repository to **GitHub**.
@@ -76,7 +70,7 @@ python -m streamlit run app.py
 
 ---
 
-## 🔬 Mathematical Foundations
+##  Mathematical Foundations
 
 - **CAPM Expected Returns**:
   $$\mathbb{E}[R_i] = R_f + \beta_i \left(\mathbb{E}[R_m] - R_f\right)$$
@@ -87,5 +81,3 @@ python -m streamlit run app.py
 
 ---
 
-## ⚠️ Disclaimer
-*This project is for quantitative research and educational purposes only. It does not constitute financial advice. Past backtested performance does not guarantee future results.*
