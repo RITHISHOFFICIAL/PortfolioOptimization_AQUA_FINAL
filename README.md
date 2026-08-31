@@ -14,7 +14,6 @@
   - **India Risk-Free Rate**: Anchored to **6.5% p.a.** (India 91-day T-bill yield).
   - **Ledoit-Wolf Covariance Shrinkage**: Eliminates noisy covariance estimation errors.
 - **Discrete Share Order Sheet**: Automatically converts fractional weights into **exact integer shares to buy** based on your total capital (₹) and live stock quotes, reporting leftover cash reserves.
-- **One-Click Broker Export**: Download ready-to-execute CSV baskets for **Zerodha**, **Groww**, and **Dhan**.
 - **Interactive Visualizations (Plotly)**:
   - Out-of-sample cumulative growth of ₹1 vs Nifty 50 index
   -  Underwater peak-to-trough drawdown curves
