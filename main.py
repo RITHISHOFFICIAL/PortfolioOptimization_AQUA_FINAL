@@ -1,10 +1,3 @@
-"""
-1.  REALISTIC RISK-FREE RATE  -- India 91-day T-bill ~6.5% p.a.
-2.  TRAIN/TEST SPLIT          -- Optimise on 2016-2021, backtest on 2022-present (10-year span)
-3.  ROBUST DATA FETCHING      -- Falls back gracefully on delisted / missing tickers
-4.  SECTOR CONSTRAINTS        -- Max 30% per sector, Max 10% per stock
-5.  MULTIPLE STRATEGIES       -- Max-Sharpe (MVO), Risk-Parity (HRP), Equal-Weight
-"""
 
 import warnings, io, requests
 warnings.filterwarnings("ignore")
@@ -13,7 +6,7 @@ import pandas as pd
 import numpy as np
 import yfinance as yf
 import matplotlib
-matplotlib.use("Agg")           # non-interactive backend (works anywhere)
+matplotlib.use("Agg")           
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 import seaborn as sns
@@ -28,9 +21,7 @@ plt.rcParams.update({
     "grid.alpha": 0.3,
 })
 
-# =====================================================================
-# 1. FETCH LIVE NIFTY 100 CONSTITUENTS
-# =====================================================================
+
 def get_nifty100_live():
     url = "https://niftyindices.com/IndexConstituent/ind_nifty100list.csv"
     headers = {
@@ -68,9 +59,7 @@ tickers, sector_map, full_df = get_nifty100_live()
 print(f"Universe: {len(tickers)} tickers.  Sample: {tickers[:5]}")
 
 
-# =====================================================================
-# 2. DOWNLOAD PRICE DATA   (Past 10 Years: 2016 -> today)
-# =====================================================================
+
 START_DATE  = "2016-01-01"
 TODAY       = date.today().strftime("%Y-%m-%d")
 TRAIN_END   = "2021-12-31"
@@ -96,9 +85,7 @@ print(f"Train: {train_prices.index[0].date()} -> {train_prices.index[-1].date()}
 print(f"Test : {test_prices.index[0].date()} -> {test_prices.index[-1].date()} ({len(test_prices)} rows)")
 
 
-# =====================================================================
-# 3. BENCHMARK (NIFTY 50)
-# =====================================================================
+
 bmark_raw = yf.download("^NSEI", start=START_DATE, end=TODAY, auto_adjust=True, progress=False)
 if isinstance(bmark_raw.columns, pd.MultiIndex):
     bmark_px = bmark_raw["Close"].squeeze()
@@ -111,11 +98,9 @@ bmark_ret_train = bmark_px.loc[:TRAIN_END].pct_change().dropna()
 bmark_ret_test  = bmark_px.loc[TEST_START:].pct_change().dropna()
 
 
-# =====================================================================
-# 4. CONSTANTS & HELPERS
-# =====================================================================
+
 TRADING_DAYS = 252
-RF = 0.065          # India 91-day T-bill ~ 6.5% p.a.
+RF = 0.065          
 
 train_returns = train_prices.pct_change().dropna()
 test_returns  = test_prices.pct_change().dropna()
@@ -136,15 +121,6 @@ def cum_returns(weights_dict, daily_ret_df):
     return (1 + pd.Series(pd_, index=daily_ret_df.index)).cumprod()
 
 
-# =====================================================================
-# 5. EXPECTED RETURNS (CAPM) & COVARIANCE (LEDOIT-WOLF)
-# =====================================================================
-#
-# WHY NOT JUST USE HISTORICAL MEAN?
-# Historical mean is dominated by the train period's luck/cycle.
-# CAPM ties each stock's expected return to its market-beta, which
-# is more stable across regimes.
-#
 mu_capm = expected_returns.capm_return(
     prices        = train_prices,
     market_prices = bmark_px.loc[:TRAIN_END],
@@ -156,14 +132,12 @@ S = risk_models.CovarianceShrinkage(train_prices, frequency=TRADING_DAYS).ledoit
 print(f"CAPM mu  -- mean: {mu_capm.mean()*100:.1f}%  std: {mu_capm.std()*100:.1f}%")
 
 
-# =====================================================================
-# 6. STRATEGY 1 -- MAX-SHARPE MVO  (with sector + stock caps)
-# =====================================================================
+
 unique_sectors   = set(cleaned_sector_map.values())
 sector_lower_map = {s: 0.00 for s in unique_sectors}
-sector_upper_map = {s: 0.30 for s in unique_sectors}   # 30% max per sector
+sector_upper_map = {s: 0.30 for s in unique_sectors}   
 
-ef = EfficientFrontier(mu_capm, S, weight_bounds=(0, 0.10))   # 10% max per stock
+ef = EfficientFrontier(mu_capm, S, weight_bounds=(0, 0.10))   
 ef.add_sector_constraints(cleaned_sector_map, sector_lower=sector_lower_map, sector_upper=sector_upper_map)
 _ = ef.max_sharpe(risk_free_rate=RF)
 weights_mvo = ef.clean_weights()
@@ -185,9 +159,9 @@ for tkr, w in top_mvo_nz.head(15).items():
     print(f"    {tkr:<22s}  {w*100:5.1f}%   [{sec}]")
 
 
-# =====================================================================
-# 7. STRATEGY 2 -- HIERARCHICAL RISK PARITY
-# =====================================================================
+
+
+
 hrp = HRPOpt(train_returns)
 hrp.optimize()
 weights_hrp = hrp.clean_weights()
@@ -202,9 +176,9 @@ print(f"  IN-SAMPLE  (train)  Return={ri2*100:.1f}%  Vol={vi2*100:.1f}%  Sharpe=
 print(f"  OUT-OF-SAMPLE (test)  Return={ro2*100:.1f}%  Vol={vo2*100:.1f}%  Sharpe={sro2:.2f}")
 
 
-# =====================================================================
-# 8. STRATEGY 3 -- EQUAL-WEIGHT
-# =====================================================================
+
+
+
 n = len(good_tickers)
 weights_ew = {t: 1.0/n for t in good_tickers}
 
@@ -218,9 +192,10 @@ print(f"  IN-SAMPLE  (train)  Return={ri3*100:.1f}%  Vol={vi3*100:.1f}%  Sharpe=
 print(f"  OUT-OF-SAMPLE (test)  Return={ro3*100:.1f}%  Vol={vo3*100:.1f}%  Sharpe={sro3:.2f}")
 
 
-# =====================================================================
-# 9. SUMMARY TABLE
-# =====================================================================
+
+
+
+
 def fmt_pct(x):   return f"{float(np.squeeze(x))*100:.1f}%"
 def fmt_sr(x):    return f"{float(np.squeeze(x)):.2f}"
 
@@ -249,12 +224,13 @@ print("="*85)
 print(f"  Risk-free rate: {RF*100:.1f}% p.a.  |  IS = In-sample (train 2016-2021)  |  OOS = Out-of-sample (test 2022-today)")
 
 
-# =====================================================================
-# 10. CHARTS
-# =====================================================================
-OUTDIR = r"c:\Users\vijay.000\Documents\Portfolio Optimization"
 
-# -- Cumulative Returns (OOS) -----------------------------------------
+
+
+OUTDIR = 
+
+
+
 fig, ax = plt.subplots(figsize=(14, 6))
 bmark_cum = (1 + bmark_ret_test.loc[test_returns.index[0]:]).cumprod().squeeze()
 
@@ -272,7 +248,10 @@ plt.savefig(f"{OUTDIR}\\oos_cumulative_returns.png", dpi=150)
 plt.close()
 print("Saved: oos_cumulative_returns.png")
 
-# -- Drawdown Chart (OOS) --------------------------------------------
+
+
+
+
 fig, ax = plt.subplots(figsize=(14, 5))
 for label, w in [("Max-Sharpe MVO", weights_mvo),
                  ("Risk-Parity HRP", weights_hrp),
@@ -291,7 +270,10 @@ plt.savefig(f"{OUTDIR}\\oos_drawdown.png", dpi=150)
 plt.close()
 print("Saved: oos_drawdown.png")
 
-# -- MVO Allocation Pie -------------------------------------------------
+
+
+
+
 top_h = {k: v for k, v in weights_mvo.items() if v > 0.005}
 other = 1 - sum(top_h.values())
 if other > 0.001:
@@ -306,7 +288,9 @@ plt.savefig(f"{OUTDIR}\\mvo_allocation_pie.png", dpi=150)
 plt.close()
 print("Saved: mvo_allocation_pie.png")
 
-# -- Sector Allocation Bar ----------------------------------------------
+
+
+
 def sec_wts(wdict, smap):
     s = pd.Series(wdict)
     s.index = [smap.get(t, "Unknown") for t in s.index]
@@ -330,7 +314,9 @@ plt.savefig(f"{OUTDIR}\\sector_allocation.png", dpi=150)
 plt.close()
 print("Saved: sector_allocation.png")
 
-# -- Correlation Heatmap ------------------------------------------------
+
+
+
 top20 = top_mvo_nz.head(20).index.tolist()
 corr  = train_returns[top20].corr()
 mask  = np.triu(np.ones_like(corr, dtype=bool))
