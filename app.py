@@ -10,8 +10,12 @@ import yfinance as yf
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
-from pypfopt import EfficientFrontier, HRPOpt, expected_returns, risk_models, DiscreteAllocation
+import scipy.cluster.hierarchy as sch
 
+if not hasattr(sch, '_LINKAGE_METHODS'):
+    sch._LINKAGE_METHODS = ('single', 'complete', 'average', 'weighted', 'centroid', 'median', 'ward')
+
+from pypfopt import EfficientFrontier, HRPOpt, expected_returns, risk_models, DiscreteAllocation
 
 st.set_page_config(
     page_title="Nifty Quant Portfolio Optimizer",
@@ -20,17 +24,14 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-
 st.markdown("""
 <style>
-    /* Main Background & Fonts */
     .stApp {
         background: radial-gradient(circle at 50% 0%, #0c1a30 0%, #050b14 100%);
         color: #f1f5f9;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
     
-    /* Glowing Metric Cards */
     .metric-container {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
@@ -66,7 +67,6 @@ st.markdown("""
         letter-spacing: 0.08em;
     }
     
-    /* Sidebar Blue Theme */
     section[data-testid="stSidebar"] {
         background: linear-gradient(180deg, #0d213f 0%, #081528 50%, #050d1a 100%) !important;
         border-right: 1px solid rgba(56, 189, 248, 0.25) !important;
@@ -114,7 +114,6 @@ st.markdown("""
         border-color: rgba(56, 189, 248, 0.2) !important;
     }
     
-    /* Header Banner */
     .header-banner {
         background: linear-gradient(90deg, rgba(2, 132, 199, 0.2) 0%, rgba(56, 189, 248, 0.05) 100%);
         border-left: 4px solid #38bdf8;
@@ -123,7 +122,6 @@ st.markdown("""
         margin-bottom: 20px;
     }
     
-    /* Custom Badge */
     .badge-accent {
         display: inline-block;
         padding: 4px 10px;
@@ -135,7 +133,6 @@ st.markdown("""
         border: 1px solid rgba(56, 189, 248, 0.3);
         margin-bottom: 8px;
     }
-    /* Logo Image Glow */
     section[data-testid="stSidebar"] img {
         filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.45));
         margin-bottom: 12px;
@@ -146,10 +143,6 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-
-
-
-
 
 @st.cache_data(ttl=3600*12)
 def get_nifty_constituents(universe="Nifty 50"):
@@ -195,15 +188,10 @@ def load_price_data(tickers, start_date="2016-01-01"):
     bmark_px = close_df["^NSEI"].squeeze().ffill()
     stock_px = close_df.drop(columns=["^NSEI"], errors="ignore").ffill()
     
-    
     valid_cols = stock_px.isnull().mean()[lambda x: x < 0.20].index.tolist()
     stock_px = stock_px[valid_cols].dropna(how="all")
     
     return stock_px, bmark_px
-
-
-
-
 
 import os
 if os.path.exists("logo.png"):
@@ -236,19 +224,13 @@ st.sidebar.subheader("Risk Constraints")
 sector_cap = st.sidebar.slider("Max Sector Cap (%)", min_value=15, max_value=60, value=30, step=5) / 100.0
 stock_cap = st.sidebar.slider("Max Single Stock Cap (%)", min_value=5, max_value=30, value=12, step=1) / 100.0
 
-
-
-
-
 st.title("Nifty Portfolio Optimizer")
-
 
 tickers_all, name_map, sector_map = get_nifty_constituents(universe)
 
 with st.spinner("Fetching market quotes and computing optimal risk weights..."):
     stock_px, bmark_px = load_price_data(tickers_all, start_date="2016-01-01")
     
-   
     split_date = "2021-12-31"
     train_px = stock_px.loc[:split_date]
     test_px  = stock_px.loc["2022-01-01":]
@@ -262,14 +244,8 @@ with st.spinner("Fetching market quotes and computing optimal risk weights..."):
     RF = 0.065
     TRADING_DAYS = 252
     
-
-
-    
     mu_capm = expected_returns.capm_return(train_px, market_prices=bmark_px.loc[:split_date], risk_free_rate=RF, frequency=TRADING_DAYS)
     S = risk_models.CovarianceShrinkage(train_px, frequency=TRADING_DAYS).ledoit_wolf()
-    
-
-
     
     if "Momentum" in strategy:
         mom_12m = (train_px.iloc[-1] / train_px.iloc[-252] - 1.0).sort_values(ascending=False)
@@ -300,34 +276,25 @@ with st.spinner("Fetching market quotes and computing optimal risk weights..."):
         full_w = ef.clean_weights()
         top_s = pd.Series(full_w).sort_values(ascending=False).head(top_n)
         raw_weights = (top_s / top_s.sum()).to_dict()
-    else: # Equal-Weight
+    else:
         selected_tickers = stock_px.columns[:top_n]
         raw_weights = {t: 1.0 / top_n for t in selected_tickers}
     
     weights = {k: v for k, v in raw_weights.items() if v > 0.0005}
 
-
-
 active_tickers = list(weights.keys())
 w_arr = np.array([weights[t] for t in active_tickers])
 w_arr = w_arr / w_arr.sum()
-
-
 
 port_daily_test = test_ret[active_tickers].values @ w_arr
 ann_ret_oos = float(np.squeeze(port_daily_test.mean())) * TRADING_DAYS
 ann_vol_oos = float(np.squeeze(port_daily_test.std())) * np.sqrt(TRADING_DAYS)
 sharpe_oos  = (ann_ret_oos - RF) / ann_vol_oos
 
-
-
-
 port_cum_oos = (1 + pd.Series(port_daily_test, index=test_ret.index)).cumprod()
 bmark_cum_oos = (1 + bmark_ret_test).cumprod()
 drawdown = (port_cum_oos / port_cum_oos.cummax() - 1)
 max_dd = float(np.squeeze(drawdown.min()))
-
-
 
 c1, c2, c3, c4 = st.columns(4)
 with c1:
@@ -340,9 +307,6 @@ with c4:
     st.markdown(f'<div class="metric-card"><div class="metric-lbl">Max Drawdown</div><div class="metric-val">{max_dd*100:.1f}%</div></div>', unsafe_allow_html=True)
 
 st.markdown("###")
-
-
-
 
 latest_prices = stock_px[active_tickers].iloc[-1]
 da = DiscreteAllocation(weights, latest_prices, total_portfolio_value=capital)
@@ -381,9 +345,6 @@ with col_summary_2:
         file_name=f"nifty_portfolio_orders_{date.today()}.csv",
         mime="text/csv"
     )
-
-
-
 
 st.markdown("---")
 tab1, tab2, tab3 = st.tabs([" Backtest & Drawdown", " Asset & Sector Allocation", "Correlation Heatmap"])
@@ -431,4 +392,3 @@ with tab3:
     fig_heat = px.imshow(corr_df, text_auto=".2f", aspect="auto", color_continuous_scale="Blues", title="Asset Correlation Matrix (Training Window)")
     fig_heat.update_layout(**plot_layout_theme)
     st.plotly_chart(fig_heat, use_container_width=True)
-
